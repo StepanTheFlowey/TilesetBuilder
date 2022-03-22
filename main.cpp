@@ -9,10 +9,11 @@
 namespace fs = std::filesystem;
 
 class BoolTable {
-  bool *table_ = nullptr;
+  bool* table_ = nullptr;
   uint16_t width_ = 0;
   uint16_t height_ = 0;
 public:
+
   BoolTable() {
 
   }
@@ -21,7 +22,7 @@ public:
     destroy();
   }
 
-  void create(uint16_t width, uint16_t height) {
+  void create(const uint16_t width, const uint16_t height) {
     table_ = new bool[width * height];
     width_ = width;
     height_ = height;
@@ -35,18 +36,18 @@ public:
   }
 
   void clear() {
-    for(uint16_t i = 0; i < width_; i++) {
-      for(uint16_t j = 0; j < height_; j++) {
+    for(uint16_t i = 0; i < width_; ++i) {
+      for(uint16_t j = 0; j < height_; ++j) {
         set(i, j, false);
       }
     }
   }
 
-  void set(uint16_t x, uint16_t y, bool value) {
+  void set(const uint16_t x, const uint16_t y, const bool value) {
     table_[x + y * width_] = value;
   }
 
-  bool get(uint16_t x, uint16_t y) {
+  bool get(const uint16_t x, const uint16_t y) const {
     return table_[x + y * width_];
   }
 };
@@ -56,7 +57,7 @@ int main() {
   uint16_t pixelSize = 0;
   uint16_t inputSize = 0;
 
-  for(uint8_t i = 4; i < 14; i++) {
+  for(uint8_t i = 4; i < 14; ++i) {
     uint16_t pSize = 0;
     pSize = std::pow(2, i);
     std::wcout << i - 3 << L".\t" << pSize << L"x" << pSize << std::endl;
@@ -67,7 +68,7 @@ int main() {
   pixelSize = std::pow(2, tableSize);
   _wsystem(L"cls");
 
-  for(uint8_t i = 1; i < 10; i++) {
+  for(uint8_t i = 1; i < 10; ++i) {
     uint16_t pSize = 0;
     pSize = std::pow(2, i);
     std::wcout << i << L".\t" << pSize << L"x" << pSize << std::endl;
@@ -94,7 +95,7 @@ int main() {
   bool found;
   uint16_t x = 0;
   uint16_t y = 0;
-  for(const auto &entry : fs::directory_iterator(L"images\\")) {
+  for(const auto& entry : fs::recursive_directory_iterator(L"images\\")) {
     if(!fs::is_regular_file(entry)) {
       continue;
     }
@@ -106,8 +107,8 @@ int main() {
 
     std::wcout << L"Allocating" << std::endl;
     found = false;
-    for(uint16_t i = 0; i < tableSize; i++) {
-      for(uint16_t j = 0; j < tableSize; j++) {
+    for(uint16_t i = 0; i < tableSize; ++i) {
+      for(uint16_t j = 0; j < tableSize; ++j) {
         if(!table.get(j, i)) {
           table.set(j, i, true);
           x = j;
