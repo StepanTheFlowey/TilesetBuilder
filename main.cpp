@@ -1,6 +1,8 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
+
 #include <cmath>
+#include <vector>
 #include <iostream>
 #include <filesystem>
 #include <Windows.h>
@@ -9,56 +11,46 @@
 namespace fs = std::filesystem;
 
 class BoolTable {
-  bool* table_ = nullptr;
-  uint16_t width_ = 0;
-  uint16_t height_ = 0;
+  std::vector<bool> storage;
+  uint32_t width_ = 0;
+  uint32_t height_ = 0;
 public:
 
-  BoolTable() {
+  BoolTable() = default;
 
-  }
+  ~BoolTable() = default;
 
-  ~BoolTable() {
-    destroy();
-  }
-
-  void create(const uint16_t width, const uint16_t height) {
-    table_ = new bool[width * height];
+  void create(const uint32_t width, const uint32_t height) {
+    storage.resize(static_cast<size_t>(width) * height);
     width_ = width;
     height_ = height;
   }
 
   void destroy() {
-    if(table_) {
-      delete[] table_;
-      table_ = nullptr;
-    }
+    storage.clear();
+    storage.shrink_to_fit();
   }
 
   void clear() {
-    for(uint16_t i = 0; i < width_; ++i) {
-      for(uint16_t j = 0; j < height_; ++j) {
-        set(i, j, false);
-      }
-    }
+    std::fill(storage.begin(), storage.end(), false);
   }
 
-  void set(const uint16_t x, const uint16_t y, const bool value) {
-    table_[x + y * width_] = value;
+  void set(const uint32_t x, const uint32_t y, const bool value) {
+    storage[x + static_cast<size_t>(y) * width_] = value;
   }
 
-  bool get(const uint16_t x, const uint16_t y) const {
-    return table_[x + y * width_];
+  bool get(const uint32_t x, const uint32_t y) const {
+    return storage[x + static_cast<size_t>(y) * width_];
   }
 };
 
 int main() {
-  uint16_t tableSize = 0;
-  uint16_t pixelSize = 0;
-  uint16_t inputSize = 0;
+  uint32_t tableSize = 0;
+  uint32_t pixelSize = 0;
+  uint32_t inputSize = 0;
 
   for(uint8_t i = 4; i < 14; ++i) {
-    uint16_t pSize = 0;
+    uint32_t pSize = 0;
     pSize = std::pow(2, i);
     std::wcout << i - 3 << L".\t" << pSize << L"x" << pSize << std::endl;
   }
@@ -69,7 +61,7 @@ int main() {
   _wsystem(L"cls");
 
   for(uint8_t i = 1; i < 10; ++i) {
-    uint16_t pSize = 0;
+    uint32_t pSize = 0;
     pSize = std::pow(2, i);
     std::wcout << i << L".\t" << pSize << L"x" << pSize << std::endl;
   }
@@ -93,13 +85,13 @@ int main() {
   output.create(pixelSize, pixelSize, sf::Color::Transparent);
 
   bool found;
-  uint16_t x = 0;
-  uint16_t y = 0;
-  for(const auto& entry : fs::recursive_directory_iterator(L"images\\")) {
+  uint32_t x = 0;
+  uint32_t y = 0;
+  for(const auto& entry : fs::recursive_directory_iterator("images\\")) {
     if(!fs::is_regular_file(entry)) {
       continue;
     }
-    if(entry.path().extension().wstring() != L".png") {
+    if(entry.path().extension().string() != ".png") {
       continue;
     }
     std::wcout << L"Loading: " << entry.path().wstring() << std::endl;
@@ -107,8 +99,8 @@ int main() {
 
     std::wcout << L"Allocating" << std::endl;
     found = false;
-    for(uint16_t i = 0; i < tableSize; ++i) {
-      for(uint16_t j = 0; j < tableSize; ++j) {
+    for(uint32_t i = 0; i < tableSize; ++i) {
+      for(uint32_t j = 0; j < tableSize; ++j) {
         if(!table.get(j, i)) {
           table.set(j, i, true);
           x = j;
@@ -123,16 +115,20 @@ int main() {
     }
 
     if(!found) {
-      std::wcout << L"Not enough space!" << std::endl;
+      std::wcout << L"\nNot enough space!\n" << std::endl;
       break;
     }
 
     x *= inputSize;
     y *= inputSize;
+
     std::wcout << L"Coping to " << x << L"x" << y << std::endl;
+
     output.copy(input, x, y, sf::IntRect(0, 0, inputSize, inputSize));
   }
   std::wcout << L"Saving output" << std::endl;
   output.saveToFile("OUTPUT.PNG");
+  output.create(0, 0);
+
   _wsystem(L"pause");
 }
